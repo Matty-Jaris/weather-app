@@ -1,19 +1,54 @@
-{% extends "base.html" %}
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🌦️ Weather App</title>
+</head>
+<body>
+    <h1>🌦️ Weather App</h1>
+    <p>Welcome to the Weather App!<br>Enter a city below to check the current weather and forecast.</p>
 
-{% block content %}
-<h2 class="text-xl font-semibold mb-4">Welcome!</h2>
-<p class="mb-4">Search for your city's weather forecast using the form below.</p>
+    <form action="/weather" method="post">
+        <input type="text" name="city" placeholder="Zadej město" required>
+        <button type="submit">Search</button>
+    </form>
 
-<form method="post" action="/search" class="flex gap-2 mb-6">
-    <input name="city" type="text" placeholder="Enter city name" required
-           class="flex-1 border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:border-blue-400">
-    <button type="submit"
-            class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded shadow">
-        Search
-    </button>
-</form>
+    {% if weather %}
+        <h2>Aktuální počasí pro {{ weather.name }}</h2>
+        <ul>
+            <li>Teplota: {{ weather.main.temp }} °C</li>
+            <li>Počasí: {{ weather.weather[0].description }}</li>
+            <li>Vlhkost: {{ weather.main.humidity }} %</li>
+            <li>Vítr: {{ weather.wind.speed }} m/s</li>
+        </ul>
+    {% endif %}
 
-<!-- Tady později doplníme výstup počasí -->
+   
+    {% if forecast %}
+    <h2>Předpověď na dalších 5 dní (po 3 hodinách)</h2>
+    <table border="1">
+        <tr>
+            <th>Datum a čas</th>
+            <th>Teplota (°C)</th>
+            <th>Počasí</th>
+            <th>Vlhkost (%)</th>
+            <th>Vítr (m/s)</th>
+        </tr>
+        {% for item in forecast.list %}
+            <tr>
+                <td>{{ item.dt_txt }}</td>
+                <td>{{ item.main.temp }}</td>
+                <td>{{ item.weather[0].description }}</td>
+                <td>{{ item.main.humidity }}</td>
+                <td>{{ item.wind.speed }}</td>
+            </tr>
+        {% endfor %}
+    </table>
+{% endif %}
 
-{% endblock %}
-
+    <footer>
+        <p>© 2025 Martin Jarábek</p>
+    </footer>
+</body>
+</html>
