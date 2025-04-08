@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+env/
+venv/
+*.sqlite3
+
+# Node.js
+node_modules/
+package-lock.json
+
+# Tailwind output
+static/css/tailwind.css
+
+# OS
+.DS_Store
+Thumbs.db

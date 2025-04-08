@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Weather App</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="/static/css/styles.css" />
+  </head>
+  <body class="bg-gradient-to-b from-blue-100 to-blue-300 min-h-screen text-gray-800">
+
+    <div class="container mx-auto px-4 py-8">
+      <h1 class="text-4xl font-bold text-center mb-6">Weather Forecast</h1>
+
+      <form method="get" action="/" class="flex justify-center mb-8">
+        <input type="text" name="city" placeholder="Enter city" class="px-4 py-2 rounded-l-md border border-gray-300 w-64" />
+        <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-r-md">Search</button>
+      </form>
+
+      {% if weather %}
+      <!-- Aktuální počasí -->
+      <div class="bg-white rounded-xl shadow-md p-6 text-center max-w-xl mx-auto mb-10">
+        <h2 class="text-2xl font-semibold mb-2">{{ weather.name }}</h2>
+        <img src="/static/img/{{ weather.weather[0].icon }}.png" alt="weather icon" class="mx-auto w-20 h-20" />
+        <p class="text-xl">{{ weather.weather[0].description | capitalize }}</p>
+        <p class="text-3xl font-bold mt-2">{{ weather.main.temp }}°C</p>
+      </div>
+      {% endif %}
+
+      {% if forecast %}
+      <!-- Předpověď -->
+      <h3 class="text-2xl font-semibold text-center mb-4">5 Day Forecast</h3>
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+        {% for item in forecast %}
+        <div class="weather-box bg-white rounded-xl shadow-md p-4 text-center">
+          <p class="text-sm text-gray-700 font-semibold">{{ item.day_name }}</p>
+          <p class="text-xs text-gray-500">{{ item.dt_txt }}</p>
+          <img src="/static/img/{{ item.weather[0].icon }}.png" alt="weather icon" class="mx-auto w-14 h-14" />
+          <p class="text-gray-800 font-bold">{{ item.main.temp }}°C</p>
+          <p class="text-gray-500 text-sm">{{ item.weather[0].description | capitalize }}</p>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+  </body>
+</html>
