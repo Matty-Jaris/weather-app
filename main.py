@@ -24,17 +24,28 @@ async def get_weather(request: Request, city: str = Form(...)):
     now = datetime.now()
     today = now.date()
 
-    # Data pro grafy
+    # Data pro dnešní den (a doplnění, pokud chybí záznamy)
     todays_data = [
         item for item in forecast_response["list"]
         if datetime.strptime(item["dt_txt"], "%Y-%m-%d %H:%M:%S").date() == today
     ]
-    if not todays_data:
-        todays_data = forecast_response["list"][:8]
 
-    labels = [item["dt_txt"][11:16] for item in todays_data]
+    if len(todays_data) < 8:
+        # Doplňujeme z následujících časových bloků
+        needed = 8 - len(todays_data)
+        future_data = [
+            item for item in forecast_response["list"]
+            if datetime.strptime(item["dt_txt"], "%Y-%m-%d %H:%M:%S").date() > today
+        ]
+        todays_data += future_data[:needed]
+
+    labels = [
+        datetime.strptime(item["dt_txt"], "%Y-%m-%d %H:%M:%S").strftime("%H:%M")
+        for item in todays_data
+    ]
     temperatures = [item["main"]["temp"] for item in todays_data]
     rain_data = [item.get("rain", {}).get("3h", 0) for item in todays_data]
+    print("Labels:", labels)
 
     # Rozdělení dat podle dnů (bez dneška)
     forecast_by_day = defaultdict(list)

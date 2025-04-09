@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 
 {% block content %}
+  <!-- Vyhledávací pole -->
   <form method="post" action="/weather" class="flex flex-col md:flex-row gap-2 mb-6">
     <input type="text" name="city" placeholder="Zadej město" required
            class="border rounded-md px-4 py-2 w-full">
@@ -11,145 +12,162 @@
   </form>
 
   {% if weather %}
-    <!-- 🫧 Horní bubliny s hodnotami dneška -->
+    <!-- Horní bublina s dnešními hodnotami -->
     <div class="bg-white/80 backdrop-blur-lg rounded-3xl p-6 shadow-lg mb-6">
       <h2 class="text-2xl font-bold text-gray-800 mb-4">Dnešní počasí – {{ weather.name }}</h2>
       <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4">
-        <div class="bg-blue-100 p-4 rounded-xl shadow flex flex-col items-center">
-          <img src="/static/img/temp.png" alt="Teplota" class="w-12 h-12 mb-2">
-          <p class="text-lg font-semibold">{{ weather.main.temp }} °C</p>
-          <p class="text-sm text-gray-600">Teplota</p>
-        </div>
-        <div class="bg-blue-100 p-4 rounded-xl shadow flex flex-col items-center">
-          <img src="/static/img/weather.png" alt="Popis" class="w-12 h-12 mb-2">
-          <p class="text-lg font-semibold">{{ weather.weather[0].description }}</p>
-          <p class="text-sm text-gray-600">Počasí</p>
-        </div>
-        <div class="bg-blue-100 p-4 rounded-xl shadow flex flex-col items-center">
-          <img src="/static/img/humidity.png" alt="Vlhkost" class="w-12 h-12 mb-2">
-          <p class="text-lg font-semibold">{{ weather.main.humidity }} %</p>
-          <p class="text-sm text-gray-600">Vlhkost</p>
-        </div>
-        <div class="bg-blue-100 p-4 rounded-xl shadow flex flex-col items-center">
-          <img src="/static/img/rain.png" alt="Srážky" class="w-12 h-12 mb-2">
-          <p class="text-lg font-semibold">{{ rain_data | sum | round(1) }} mm</p>
-          <p class="text-sm text-gray-600">Srážky dnes</p>
-        </div>
-        <div class="bg-blue-100 p-4 rounded-xl shadow flex flex-col items-center">
-          <img src="/static/img/wind.png" alt="Vítr" class="w-12 h-12 mb-2">
-          <p class="text-lg font-semibold">{{ weather.wind.speed }} m/s</p>
-          <p class="text-sm text-gray-600">Vítr</p>
-        </div>
-      </div>
-    </div>
-
-    <!-- 📊 Bublina s grafem -->
-    <div class="bg-white/80 backdrop-blur-lg rounded-3xl p-6 shadow-lg mb-6">
-      <div class="flex flex-wrap gap-4 justify-center mb-4">
-        <button onclick="showChart('temperature')"
-                class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md">
-          Teplota
-        </button>
-        <button onclick="showChart('rain')"
-                class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md">
-          Srážky
-        </button>
-      </div>
-      <canvas id="temperatureChart" class="w-full max-w-3xl mx-auto mb-6"></canvas>
-      <canvas id="rainChart" class="w-full max-w-3xl mx-auto hidden"></canvas>
-    </div>
-
-    <!-- 📅 Rozklikávací karty s předpovědí -->
-    <h2 class="text-2xl font-bold text-gray-800 mb-4">📅 Předpověď na další dny</h2>
-    <div class="space-y-4">
-      {% for day in ordered_days %}
-        {% set entries = forecast_by_day[day] %}
-        {% if entries %}
-          {% set avg_temp = entries | map(attribute='temp') | list | sum / entries | length %}
-          <div class="bg-white/80 backdrop-blur-lg rounded-2xl p-4 shadow">
-            <button onclick="toggleDetails('{{ day }}')" class="w-full flex justify-between items-center">
-              <span class="text-lg font-semibold">{{ day }}</span>
-              <span>
-                🌡️ {{ avg_temp | round(1) }} °C |
-                <img src="http://openweathermap.org/img/wn/{{ entries[0].icon }}.png"
-                     alt="{{ entries[0].description }}" class="inline w-8 h-8 align-middle">
-                {{ entries[0].description }}
-              </span>
-            </button>
-            <div id="details-{{ day }}" class="hidden mt-4">
-              <table class="table-auto w-full text-sm border border-gray-200">
-                <thead>
-                  <tr class="bg-blue-100">
-                    <th class="p-2 border">Čas</th>
-                    <th class="p-2 border">Teplota</th>
-                    <th class="p-2 border">Popis</th>
-                    <th class="p-2 border">Vlhkost</th>
-                    <th class="p-2 border">Vítr</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {% for entry in entries %}
-                    <tr class="odd:bg-gray-100">
-                      <td class="p-2 border">{{ entry.time }}</td>
-                      <td class="p-2 border text-center">{{ entry.temp }} °C</td>
-                      <td class="p-2 border text-center">
-                        <img src="http://openweathermap.org/img/wn/{{ entry.icon }}.png"
-                             alt="{{ entry.description }}" class="inline w-6 h-6 align-middle">
-                        {{ entry.description }}
-                      </td>
-                      <td class="p-2 border text-center">{{ entry.humidity }} %</td>
-                      <td class="p-2 border text-center">{{ entry.wind }} m/s</td>
-                    </tr>
-                  {% endfor %}
-                </tbody>
-              </table>
-            </div>
+        {% set icons = ['temp', 'weather', 'humidity', 'rain', 'wind'] %}
+        {% set bubble_labels = ['Teplota', 'Počasí', 'Vlhkost', 'Srážky', 'Vítr'] %}
+        {% set values = [weather.main.temp ~ ' °C', weather.weather[0].description, weather.main.humidity ~ ' %', rain_data | sum | round(1) ~ ' mm', weather.wind.speed ~ ' m/s'] %}
+        {% for i in range(icons|length) %}
+          <div class="bg-blue-100 p-4 rounded-xl shadow flex flex-col items-center">
+            <img src="/static/img/{{ icons[i] }}.png" alt="{{ bubble_labels[i] }}" class="w-12 h-12 mb-2">
+            <p class="text-lg font-semibold">{{ values[i] }}</p>
+            <p class="text-sm text-gray-600">{{ bubble_labels[i] }}</p>
           </div>
-        {% endif %}
-      {% endfor %}
+        {% endfor %}
+      </div>
     </div>
 
+    <!-- Spodní sekce rozdělená na dvě bubliny -->
+    <div class="flex flex-col lg:flex-row gap-6">
+
+      <!-- Grafy vlevo -->
+      <div class="bg-white/80 backdrop-blur-lg rounded-3xl p-6 shadow-lg flex-1">
+        <div class="flex gap-4 mb-4 justify-center">
+          <button onclick="showChart('temperature')"
+                  class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md">
+            Teplota
+          </button>
+          <button onclick="showChart('rain')"
+                  class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md">
+            Srážky
+          </button>
+        </div>
+        <canvas id="temperatureChart" class="w-full h-72"></canvas>
+        <canvas id="rainChart" class="w-full h-72 hidden"></canvas>
+      </div>
+
+      <!-- Předpověď vpravo -->
+      <div class="bg-white/80 backdrop-blur-lg rounded-3xl p-6 shadow-lg flex-1">
+        <h2 class="text-xl font-bold mb-4">Předpověď na 5 dní</h2>
+        <div id="forecastContainer" class="space-y-4">
+          {% for day in ordered_days %}
+            {% set entries = forecast_by_day[day] %}
+            {% if entries %}
+              {% set avg_temp = entries | map(attribute='temp') | list | sum / entries | length %}
+              <div class="rounded-xl border border-gray-300 overflow-hidden transition-all duration-300" id="card-{{ day }}">
+                <button onclick="toggleCard('{{ day }}')" class="w-full px-4 py-3 bg-blue-100 flex justify-between items-center">
+                  <span class="font-semibold">{{ day }}</span>
+                  <span>
+                    🌡️ {{ avg_temp | round(1) }} °C |
+                    <img src="http://openweathermap.org/img/wn/{{ entries[0].icon }}.png"
+                         alt="{{ entries[0].description }}" class="inline w-8 h-8">
+                    {{ entries[0].description }}
+                  </span>
+                </button>
+                <div class="hidden px-4 py-2 bg-white" id="details-{{ day }}">
+                  <table class="table-auto w-full text-sm">
+                    <thead>
+                      <tr class="bg-blue-50">
+                        <th class="p-2">Čas</th>
+                        <th class="p-2">Teplota</th>
+                        <th class="p-2">Popis</th>
+                        <th class="p-2">Vlhkost</th>
+                        <th class="p-2">Vítr</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {% for entry in entries %}
+                        <tr class="odd:bg-gray-100">
+                          <td class="p-2">{{ entry.time }}</td>
+                          <td class="p-2 text-center">{{ entry.temp }} °C</td>
+                          <td class="p-2 text-center">
+                            <img src="http://openweathermap.org/img/wn/{{ entry.icon }}.png"
+                                 alt="{{ entry.description }}" class="inline w-6 h-6 align-middle">
+                            {{ entry.description }}
+                          </td>
+                          <td class="p-2 text-center">{{ entry.humidity }} %</td>
+                          <td class="p-2 text-center">{{ entry.wind }} m/s</td>
+                        </tr>
+                      {% endfor %}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            {% endif %}
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <!-- JS grafy a karty -->
     <script>
+      let currentChart = 'temperature';
       function showChart(type) {
-        document.getElementById('temperatureChart').classList.toggle('hidden', type !== 'temperature');
-        document.getElementById('rainChart').classList.toggle('hidden', type !== 'rain');
+        const charts = ['temperature', 'rain'];
+        charts.forEach(chart => {
+          document.getElementById(chart + 'Chart').style.display = 'none';
+        });
+        document.getElementById(type + 'Chart').style.display = 'block';
+        currentChart = type;
       }
 
-      function toggleDetails(day) {
-        const el = document.getElementById(`details-${day}`);
-        el.classList.toggle('hidden');
+      let currentlyOpen = null;
+      function toggleCard(day) {
+        const detail = document.getElementById(`details-${day}`);
+        const card = document.getElementById(`card-${day}`);
+
+        if (currentlyOpen === day) {
+          detail.classList.add('hidden');
+          card.classList.remove('ring', 'ring-blue-300');
+          currentlyOpen = null;
+        } else {
+          document.querySelectorAll('[id^="details-"]').forEach(el => el.classList.add('hidden'));
+          document.querySelectorAll('[id^="card-"]').forEach(el => el.classList.remove('ring', 'ring-blue-300'));
+
+          detail.classList.remove('hidden');
+          card.classList.add('ring', 'ring-blue-300');
+          card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          currentlyOpen = day;
+        }
       }
 
       const labels = {{ labels | tojson }};
       const temperatures = {{ temperatures | tojson }};
       const rainData = {{ rain_data | tojson }};
 
-      const tempCtx = document.getElementById('temperatureChart').getContext('2d');
-      new Chart(tempCtx, {
+      const tempChart = new Chart(document.getElementById('temperatureChart'), {
         type: 'line',
         data: {
           labels: labels,
           datasets: [{
             label: 'Teplota (°C)',
             data: temperatures,
-            borderColor: 'rgba(59, 130, 246, 1)',
-            backgroundColor: 'rgba(59, 130, 246, 0.2)',
+            borderColor: '#3b82f6',
+            backgroundColor: 'rgba(59, 130, 246, 0.1)',
             borderWidth: 2,
-            fill: true,
             tension: 0.4,
-            pointRadius: 4
+            pointRadius: 4,
+            fill: true
           }]
         },
         options: {
           responsive: true,
           scales: {
+            x: {
+              type: 'category',
+              title: {
+                display: true,
+                text: 'Čas'
+              }
+            },
             y: { beginAtZero: false }
           }
         }
       });
 
-      const rainCtx = document.getElementById('rainChart').getContext('2d');
-      new Chart(rainCtx, {
+      const rainChart = new Chart(document.getElementById('rainChart'), {
         type: 'bar',
         data: {
           labels: labels,
@@ -157,17 +175,27 @@
             label: 'Srážky (mm)',
             data: rainData,
             backgroundColor: 'rgba(147, 197, 253, 0.7)',
-            borderColor: 'rgba(59, 130, 246, 1)',
+            borderColor: '#3b82f6',
             borderWidth: 1
           }]
         },
         options: {
           responsive: true,
           scales: {
+            x: {
+              type: 'category',
+              title: {
+                display: true,
+                text: 'Čas'
+              }
+            },
             y: { beginAtZero: true }
           }
         }
       });
+
+      // Inicializace: zobrazit jen výchozí graf
+      showChart('temperature');
     </script>
   {% endif %}
 {% endblock %}
